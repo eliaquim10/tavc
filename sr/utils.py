@@ -56,6 +56,28 @@ def load(image_file):
         return None
     return image
 
+def find_bound_box(filename):
+    import xml.etree.ElementTree as ET
+    #parsing XML file
+
+    tree = ET.parse(filename)
+    #fetching the root element
+
+    root = tree.getroot()
+    bound_box = []
+    for object in root.findall('object'):
+        name_element = object.find("name") 
+        bndbox = object.find("bndbox") 
+        xmin, ymin, xmax, ymax = bndbox.find("xmin").text, bndbox.find("ymin").text, bndbox.find("xmax").text, bndbox.find("ymax").text
+        name = name_element.text    
+
+        # print(xmin, ymin, xmax, ymax)
+        bound_box.append({"name": name,  "bbox":[int(xmin), int(ymin), int(xmax), int(ymax)]})
+
+        # print(subelem.tag, object.attrib, subelem.text)
+
+    return bound_box
+
 
 def load_image(path):
     image = np.array(Image.open(path))

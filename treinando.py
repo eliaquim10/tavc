@@ -48,17 +48,23 @@ discriminador = unet_descriminador.Discriminator()
 
 # gan_generator.load_weights(weights_file('pre_generator.h5'))
 # print(gan_generator.summary())
+
+# valor = tf.cast(np.ones((1, 256, 256, 3)), tf.float32)
+# output = gan_generator(valor, training=False)
+# print(tf.shape(output))
+# print(output)
+
 if (training):
     pre_trainer = DenoiseGeneratorTrainer(model=gan_generator, checkpoint_dir=f'.ckpt/pre_generator1{int(not training)}')
     pre_trainer.train(train,
                     valid.take(4),
                     # steps=1000000, 
-                    steps=1000, 
+                    steps=1000,                                                                                                                              
                     # evaluate_every=10000, 
                     evaluate_every=10, 
                     save_best_only=False)
 # else: 
-    gan_generator.load_weights(weights_file('pre_generator.h5'))
+    # gan_generator.load_weights(weights_file('pre_generator.h5'))
     pre_trainer.model.save_weights(weights_file('pre_generator.h5'))
 
 if(not training and gan_training):

@@ -136,6 +136,121 @@ class Loader:
         for _ in ds: pass
         print(f'Cached decoded images in {cache_file}.')
 
+
+class Loader_Bound:
+    def __init__(self,
+                 images_dir='S2TLD/JPEGImages',
+                 annotations_dir='S2TLD/Annotations',
+                 caches_dir='S2TLD/caches', 
+                 size = 100):
+
+        self.files = sorted(os.listdir(images_dir))[:size]
+
+        self.images_dir = images_dir
+        self.annotations_dir = annotations_dir
+        self.caches_dir = caches_dir
+
+        os.makedirs(images_dir, exist_ok=True)
+        os.makedirs(annotations_dir, exist_ok=True)
+        os.makedirs(caches_dir, exist_ok=True)
+
+    def __len__(self):
+        return len(self.image_ids)
+
+    def dataset(self, batch_size=16, repeat_count=None, random_transform=True):
+        ds = self.denoise_dataset()
+        
+        # ds = ds.map(lambda original, bbox: [noiser(original, std=(20)/(255)), bbox], num_parallel_calls=AUTOTUNE)
+        
+        if random_transform:
+            ds = ds.map(lambda noise, original: random_crop(noise, original, scale=self.scale), num_parallel_calls=AUTOTUNE)
+            ds = ds.map(random_rotate, num_parallel_calls=AUTOTUNE)
+            ds = ds.map(random_flip, num_parallel_calls=AUTOTUNE)
+        # ds = ds.batch(batch_size)
+        # ds = ds.repeat(repeat_count)
+        # ds = ds.prefetch(buffer_size=AUTOTUNE)
+        return ds
+
+    def denoise_dataset(self):
+        if not os.path.exists(self._denoise_images_dir()):
+            raise ValueError("subset not found ")
+
+
+        ds = self._images_dataset(self._denoise_image_files())#.cache(self._denoise_cache_file())
+        
+        # if not os.path.exists(self._denoise_cache_index()):
+        #     self._populate_cache(ds, self._denoise_cache_file())
+
+        return ds
+
+    def noise_dataset(self):
+        if not os.path.exists(self._noise_images_dir()):
+            raise ValueError("subset not found ")
+            
+        ds = self._images_dataset(self._noise_image_files())#.cache(self._noise_cache_file())
+        
+        if not os.path.exists(self._noise_cache_index()):
+            self._populate_cache(ds, self._noise_cache_file())
+        
+        return ds
+
+    def _denoise_cache_file(self):
+        return os.path.join(self.caches_dir, f'color_{self.subset}_denoise.cache')
+
+    def _noise_cache_file(self):
+        return os.path.join(self.caches_dir, f'color_{self.subset}_noise_{self.downgrade}_X{self.scale}.cache')
+
+    def _denoise_cache_index(self):
+        return f'{self._denoise_cache_file()}.index'
+
+    def _noise_cache_index(self):
+        return f'{self._noise_cache_file()}.index'
+
+    def _denoise_image_files(self):
+        images_dir = self._denoise_images_dir()
+        images_file = [[os.path.join(images_dir, f'{image_id[:-4]}.jpg'), os.path.join(self.annotations_dir, f'{image_id[:-4]}.xml')] for image_id in self.files]
+        return images_file
+
+    def _noise_image_files(self):
+        images_dir = self._noise_images_dir()
+        images_file = [[os.path.join(images_dir, f'{image_id[:-4]}.jpg'), os.path.join(self.annotations_dir, f'{image_id[:-4]}.xml')] for image_id in self.files]
+        return images_file
+
+    def _noise_image_file(self, image_id):
+        return f'{image_id}.png'
+
+    def _denoise_images_dir(self):
+        return os.path.join(self.images_dir)
+
+    def _noise_images_dir(self):
+        return os.path.join(self.images_dir)
+
+    @staticmethod
+    def _images_dataset(image_files):
+        ds = []
+        for filename, bbox in image_files:
+            with tf.device("/GPU:0"):
+                image = load(filename)
+                boundbox = find_bound_box(bbox)
+                if image is not None:
+                    ds.append([image, boundbox])
+                else:
+                    os.remove(filename)
+        # ds = tf.data.Dataset.from_tensor_slices(ds)
+        
+        # with tf.device("/CPU:0"):
+        # ds = tf.data.Dataset.from_tensor_slices(image_files[:2])
+        # ds = ds.map(tf.io.read_file)
+        # ds = ds.map(lambda x: tf.image.decode_jpeg(x, channels=3), num_parallel_calls=AUTOTUNE)
+        
+        return ds
+
+    @staticmethod
+    def _populate_cache(ds, cache_file):
+        print(f'Caching decoded images in {cache_file} ...')
+        for _ in ds: pass
+        print(f'Cached decoded images in {cache_file}.')
+
 # data_loader_train = Loader(scale=4, 
 #                 subset='train', 
 #                 downgrade='bicubic', 

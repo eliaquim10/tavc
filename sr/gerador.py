@@ -87,24 +87,24 @@ class Gerador_UNet():
         # inputs = tf.keras.layers.Input(shape=[256, 256, 3])
 
         down_stack = [
-            self.downsample(64, 3, apply_batchnorm=True),  # (batch_size, 128, 128, 64)
-            self.downsample(128, 3),  # (batch_size, 64, 64, 128)
-            self.downsample(256, 3),  # (batch_size, 32, 32, 256)
-            self.downsample(512, 3),  # (batch_size, 16, 16, 512)
-            self.downsample(512, 3),  # (batch_size, 8, 8, 512)
-            self.downsample(512, 3),  # (batch_size, 4, 4, 512)
-            self.downsample(512, 3),  # (batch_size, 2, 2, 512)
-            self.downsample(512, 3),  # (batch_size, 1, 1, 512)
+            self.downsample(64, 3, apply_batchnorm=True),  # (batch_size, 256, 256, 3) vs (batch_size, 128, 128, 64)
+            self.downsample(128, 5),  # (batch_size, 128, 128, 64) vs (batch_size, 64, 64, 128)
+            self.downsample(256, 5),  # (batch_size, 64, 64, 128) vs (batch_size, 32, 32, 256)
+            self.downsample(512, 5),  # (batch_size, 32, 32, 256) vs (batch_size, 16, 16, 512)
+            self.downsample(512, 5),  # (batch_size, 16, 16, 512) vs (batch_size, 8, 8, 512)
+            self.downsample(512, 5),  # (batch_size, 8, 8, 512) vs (batch_size, 4, 4, 512)
+            self.downsample(512, 5),  # (batch_size, 4, 4, 512) vs (batch_size, 2, 2, 512)
+            self.downsample(512, 5),  # (batch_size, 2, 2, 512) vs (batch_size, 1, 1, 512)
         ]
 
         up_stack = [
-            self.upsample(512, 3, apply_dropout=True),  # (batch_size, 2, 2, 1024)
-            self.upsample(512, 3, apply_dropout=True),  # (batch_size, 4, 4, 1024)
-            self.upsample(512, 3, apply_dropout=True),  # (batch_size, 8, 8, 1024)
-            self.upsample(512, 3),  # (batch_size, 16, 16, 1024)
-            self.upsample(256, 3),  # (batch_size, 32, 32, 512)
-            self.upsample(128, 3),  # (batch_size, 64, 64, 256)
-            self.upsample(64, 3),  # (batch_size, 128, 128, 128)
+            self.upsample(512, 5, apply_dropout=True),  # (batch_size, 1, 1, 512) vs (batch_size, 2, 2, 1024)
+            self.upsample(512, 5, apply_dropout=True),  # (batch_size, 2, 2, 64) vs (batch_size, 4, 4, 1024)
+            self.upsample(512, 5, apply_dropout=True),  # (batch_size, 4, 4, 64) vs (batch_size, 8, 8, 1024)
+            self.upsample(512, 5),  # (batch_size, 8, 8, 64) vs (batch_size, 16, 16, 1024)
+            self.upsample(256, 5),  # (batch_size, 16, 16, 64) vs (batch_size, 32, 32, 512)
+            self.upsample(128, 5),  # (batch_size, 32, 32, 64) vs (batch_size, 64, 64, 256)
+            self.upsample(64, 5),  # (batch_size, 64, 64, 64) vs (batch_size, 128, 128, 128)
         ]
 
         initializer = tf.random_normal_initializer(0., 0.02)
@@ -146,3 +146,10 @@ def __main__():
     pass
 if __name__ == "__main__":
     pass
+
+# unet para remocão de ruido de imagens medicas
+# secão dois do trabalho
+
+# https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9446143
+# monta apresentacão
+#     se tem o git
